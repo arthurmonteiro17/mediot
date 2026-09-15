@@ -1,12 +1,13 @@
 import { format, parseISO, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { hospital, movements, products, staff } from "./data";
+import { hospital, staff } from "./data";
 import type {
   Alert,
   DailyFlow,
   Forecast,
   Movement,
   Product,
+  Staff,
   StockLevel,
 } from "./types";
 
@@ -17,15 +18,19 @@ export function getStockLevel(product: Product): StockLevel {
   return "ok";
 }
 
-export function getProduct(id: string) {
+export function findProduct(products: Product[], id: string) {
   return products.find((p) => p.id === id);
 }
 
-export function getStaff(id: string) {
+export function findStaff(people: Staff[], id: string) {
+  return people.find((s) => s.id === id);
+}
+
+export function getStaffById(id: string) {
   return staff.find((s) => s.id === id);
 }
 
-export function getDashboardStats() {
+export function getDashboardStats(products: Product[]) {
   const levels = products.map(getStockLevel);
   return {
     productCount: products.length,
@@ -36,18 +41,18 @@ export function getDashboardStats() {
   };
 }
 
-export function getDailyFlow(days = 7): DailyFlow[] {
-  const today = parseISO("2026-09-15T12:00:00-03:00");
+export function getDailyFlow(
+  movements: Movement[],
+  days = 7,
+  referenceIso = new Date().toISOString(),
+): DailyFlow[] {
+  const today = parseISO(referenceIso);
   const buckets: DailyFlow[] = [];
 
   for (let i = days - 1; i >= 0; i -= 1) {
     const day = subDays(today, i);
     const key = format(day, "yyyy-MM-dd");
-    buckets.push({
-      date: key,
-      entradas: 0,
-      saidas: 0,
-    });
+    buckets.push({ date: key, entradas: 0, saidas: 0 });
   }
 
   const index = new Map(buckets.map((b) => [b.date, b]));
@@ -63,17 +68,19 @@ export function getDailyFlow(days = 7): DailyFlow[] {
   return buckets;
 }
 
-export function getRecentMovements(limit = 8): Movement[] {
-  return [...movements]
-    .sort(
-      (a, b) =>
-        parseISO(b.timestamp).getTime() - parseISO(a.timestamp).getTime(),
-    )
-    .slice(0, limit);
+export function getSortedMovements(movements: Movement[], limit?: number) {
+  const sorted = [...movements].sort(
+    (a, b) =>
+      parseISO(b.timestamp).getTime() - parseISO(a.timestamp).getTime(),
+  );
+  return typeof limit === "number" ? sorted.slice(0, limit) : sorted;
 }
 
 /** Média diária de saídas nos últimos 14 dias → dias até possível falta. */
-export function getForecasts(): Forecast[] {
+export function getForecasts(
+  products: Product[],
+  movements: Movement[],
+): Forecast[] {
   const windowDays = 14;
 
   return products
@@ -121,12 +128,16 @@ export function getForecasts(): Forecast[] {
       (f) =>
         f.daysRemaining !== null &&
         f.daysRemaining <= 10 &&
-        (getProduct(f.productId)?.stock ?? 0) >= 0,
+        (findProduct(products, f.productId)?.stock ?? 0) >= 0,
     )
     .sort((a, b) => (a.daysRemaining ?? 99) - (b.daysRemaining ?? 99));
 }
 
-export function getAlerts(): Alert[] {
+export function getAlerts(
+  products: Product[],
+  movements: Movement[],
+  lastSync = hospital.lastSync,
+): Alert[] {
   const alerts: Alert[] = [];
 
   for (const product of products) {
@@ -138,7 +149,7 @@ export function getAlerts(): Alert[] {
         title: `${product.name} zerado`,
         detail: "Nenhuma unidade disponível no almoxarifado.",
         productId: product.id,
-        timestamp: hospital.lastSync,
+        timestamp: lastSync,
       });
     } else if (level === "critico") {
       alerts.push({
@@ -147,7 +158,7 @@ export function getAlerts(): Alert[] {
         title: `${product.name} em nível crítico`,
         detail: `Restam ${product.stock} ${product.unit} (limite crítico: ${product.criticalStock}).`,
         productId: product.id,
-        timestamp: hospital.lastSync,
+        timestamp: lastSync,
       });
     } else if (level === "baixo") {
       alerts.push({
@@ -156,17 +167,20 @@ export function getAlerts(): Alert[] {
         title: `${product.name} com estoque baixo`,
         detail: `Estoque em ${product.stock} ${product.unit} — mínimo desejado: ${product.minStock}.`,
         productId: product.id,
-        timestamp: hospital.lastSync,
+        timestamp: lastSync,
       });
     }
   }
 
-  const forecasts = getForecasts().filter(
-    (f) => f.daysRemaining !== null && f.daysRemaining > 0 && f.daysRemaining <= 6,
+  const forecasts = getForecasts(products, movements).filter(
+    (f) =>
+      f.daysRemaining !== null &&
+      f.daysRemaining > 0 &&
+      f.daysRemaining <= 6,
   );
 
   for (const forecast of forecasts) {
-    const product = getProduct(forecast.productId);
+    const product = findProduct(products, forecast.productId);
     if (!product || getStockLevel(product) === "zerado") continue;
     alerts.push({
       id: `a-${product.id}-forecast`,
@@ -174,7 +188,7 @@ export function getAlerts(): Alert[] {
       title: `Risco de falta: ${product.name}`,
       detail: forecast.message,
       productId: product.id,
-      timestamp: hospital.lastSync,
+      timestamp: lastSync,
     });
   }
 
@@ -183,7 +197,7 @@ export function getAlerts(): Alert[] {
     severity: "info",
     title: "ESP32 sincronizado via Wi-Fi",
     detail: "Leitor RFID do corredor B enviou o último lote de movimentações.",
-    timestamp: hospital.lastSync,
+    timestamp: lastSync,
   });
 
   const severityOrder = { critical: 0, warning: 1, info: 2 } as const;

@@ -1,9 +1,13 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getProduct } from "@/lib/analytics";
+import { useMediot } from "@/lib/store";
 import type { Forecast } from "@/lib/types";
 import { Clock3 } from "lucide-react";
 
 export function ForecastPanel({ forecasts }: { forecasts: Forecast[] }) {
+  const { products } = useMediot();
+
   return (
     <Card className="border-slate-200/80 bg-white/85 shadow-none backdrop-blur">
       <CardHeader className="flex flex-row items-center gap-2 pb-3">
@@ -19,7 +23,7 @@ export function ForecastPanel({ forecasts }: { forecasts: Forecast[] }) {
           </p>
         ) : (
           forecasts.map((forecast) => {
-            const product = getProduct(forecast.productId);
+            const product = products.find((p) => p.id === forecast.productId);
             if (!product) return null;
             const urgent =
               forecast.daysRemaining !== null && forecast.daysRemaining <= 3;

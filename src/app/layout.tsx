@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Manrope, Outfit } from "next/font/google";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -19,9 +20,9 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MedIoT — Dashboard de estoque hospitalar",
+  title: "MedIoT — Sistema de estoque hospitalar",
   description:
-    "Painel operacional do MedIoT 2.0 para acompanhar estoque, alertas, movimentações RFID e previsões de falta.",
+    "MedIoT 3.0: dashboard, controle de estoque e movimentações com rastreio RFID.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -30,7 +31,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="pt-BR"
       className={`${manrope.variable} ${outfit.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

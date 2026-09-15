@@ -12,13 +12,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateTime, getProduct, getStaff } from "@/lib/analytics";
+import { formatDateTime, getStaffById } from "@/lib/analytics";
+import { useMediot } from "@/lib/store";
 import type { Movement, MovementType } from "@/lib/types";
 import { ArrowDownLeft, ArrowUpRight, Radio } from "lucide-react";
 
 type Filter = "todos" | MovementType;
 
-export function MovementsTable({ movements }: { movements: Movement[] }) {
+export function MovementsTable({
+  movements,
+  title = "Movimentações recentes",
+  showFilters = true,
+}: {
+  movements: Movement[];
+  title?: string;
+  showFilters?: boolean;
+}) {
+  const { products } = useMediot();
   const [filter, setFilter] = useState<Filter>("todos");
 
   const filtered = useMemo(() => {
@@ -28,33 +38,33 @@ export function MovementsTable({ movements }: { movements: Movement[] }) {
 
   return (
     <Card className="border-slate-200/80 bg-white/85 shadow-none backdrop-blur">
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3">
-        <CardTitle className="text-base font-semibold">
-          Movimentações recentes
-        </CardTitle>
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              ["todos", "Todas"],
-              ["saida", "Saídas"],
-              ["entrada", "Entradas"],
-            ] as const
-          ).map(([value, label]) => (
-            <Button
-              key={value}
-              size="sm"
-              variant={filter === value ? "default" : "outline"}
-              className={
-                filter === value
-                  ? "bg-teal-700 hover:bg-teal-800"
-                  : "border-slate-200 bg-white"
-              }
-              onClick={() => setFilter(value)}
-            >
-              {label}
-            </Button>
-          ))}
-        </div>
+      <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
+        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+        {showFilters && (
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                ["todos", "Todas"],
+                ["saida", "Saídas"],
+                ["entrada", "Entradas"],
+              ] as const
+            ).map(([value, label]) => (
+              <Button
+                key={value}
+                size="sm"
+                variant={filter === value ? "default" : "outline"}
+                className={
+                  filter === value
+                    ? "bg-teal-700 hover:bg-teal-800"
+                    : "border-slate-200 bg-white"
+                }
+                onClick={() => setFilter(value)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="pt-0">
         <Table>
@@ -69,8 +79,8 @@ export function MovementsTable({ movements }: { movements: Movement[] }) {
           </TableHeader>
           <TableBody>
             {filtered.map((movement) => {
-              const product = getProduct(movement.productId);
-              const person = getStaff(movement.staffId);
+              const product = products.find((p) => p.id === movement.productId);
+              const person = getStaffById(movement.staffId);
               const isExit = movement.type === "saida";
               return (
                 <TableRow key={movement.id}>
