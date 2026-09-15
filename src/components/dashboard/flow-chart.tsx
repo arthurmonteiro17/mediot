@@ -1,15 +1,5 @@
 "use client";
 
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { formatDayLabel } from "@/lib/analytics";
 import type { DailyFlow } from "@/lib/types";
 
@@ -18,6 +8,11 @@ export function FlowChart({ data }: { data: DailyFlow[] }) {
     ...d,
     label: formatDayLabel(d.date),
   }));
+
+  const maxValue = Math.max(
+    1,
+    ...chartData.flatMap((d) => [d.entradas, d.saidas]),
+  );
 
   const hasActivity = chartData.some((d) => d.entradas > 0 || d.saidas > 0);
 
@@ -30,68 +25,48 @@ export function FlowChart({ data }: { data: DailyFlow[] }) {
   }
 
   return (
-    <div className="h-[280px] w-full min-w-0">
-      <ResponsiveContainer width="100%" height={280} debounce={50}>
-        <AreaChart
-          data={chartData}
-          margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
-        >
-          <defs>
-            <linearGradient id="fillEntradas" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0f766e" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#0f766e" stopOpacity={0.02} />
-            </linearGradient>
-            <linearGradient id="fillSaidas" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#c2410c" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#c2410c" stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 6" stroke="#cbd5e1" vertical={false} />
-          <XAxis
-            dataKey="label"
-            tickLine={false}
-            axisLine={false}
-            tick={{ fill: "#64748b", fontSize: 12 }}
-          />
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            tick={{ fill: "#64748b", fontSize: 12 }}
-          />
-          <Tooltip
-            contentStyle={{
-              borderRadius: 12,
-              border: "1px solid #dbe4ee",
-              boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
-            }}
-            labelStyle={{ color: "#0f172a", fontWeight: 600 }}
-          />
-          <Legend
-            verticalAlign="top"
-            align="right"
-            iconType="circle"
-            wrapperStyle={{ paddingBottom: 12, fontSize: 13 }}
-          />
-          <Area
-            type="monotone"
-            dataKey="entradas"
-            name="Entradas"
-            stroke="#0f766e"
-            fill="url(#fillEntradas)"
-            strokeWidth={2.2}
-            isAnimationActive={false}
-          />
-          <Area
-            type="monotone"
-            dataKey="saidas"
-            name="Saídas"
-            stroke="#c2410c"
-            fill="url(#fillSaidas)"
-            strokeWidth={2.2}
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+    <div className="space-y-4">
+      <div className="flex justify-end gap-4 text-xs text-slate-600">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2.5 rounded-full bg-teal-700" />
+          Entradas
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2.5 rounded-full bg-orange-700" />
+          Saídas
+        </span>
+      </div>
+
+      <div className="grid h-[220px] grid-cols-7 items-end gap-2 sm:gap-3">
+        {chartData.map((day) => {
+          const entradaH = Math.round((day.entradas / maxValue) * 100);
+          const saidaH = Math.round((day.saidas / maxValue) * 100);
+          return (
+            <div key={day.date} className="flex h-full flex-col justify-end gap-2">
+              <div className="flex flex-1 items-end justify-center gap-1">
+                <div
+                  className="w-3 rounded-t-md bg-teal-700/90 sm:w-4"
+                  style={{ height: `${Math.max(entradaH, day.entradas > 0 ? 6 : 0)}%` }}
+                  title={`Entradas: ${day.entradas}`}
+                />
+                <div
+                  className="w-3 rounded-t-md bg-orange-700/90 sm:w-4"
+                  style={{ height: `${Math.max(saidaH, day.saidas > 0 ? 6 : 0)}%` }}
+                  title={`Saídas: ${day.saidas}`}
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] font-medium capitalize text-slate-600 sm:text-xs">
+                  {day.label}
+                </p>
+                <p className="text-[10px] tabular-nums text-slate-400">
+                  {day.entradas}/{day.saidas}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
