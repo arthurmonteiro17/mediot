@@ -103,8 +103,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="rounded-2xl border border-slate-200 bg-white/80 px-6 py-16 text-center text-slate-500">
             Carregando estoque e movimentações do banco SQLite…
           </div>
-        ) : (
+        ) : ready ? (
           children
+        ) : (
+          !error && (
+            <div className="rounded-2xl border border-slate-200 bg-white/80 px-6 py-16 text-center text-slate-500">
+              Aguardando dados do almoxarifado…
+            </div>
+          )
         )}
       </div>
     </div>

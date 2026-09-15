@@ -89,7 +89,7 @@ export function getForecasts(
         (m) => m.productId === product.id && m.type === "saida",
       );
       const totalOut = exits.reduce((sum, m) => sum + m.quantity, 0);
-      const dailyAverage = totalOut / windowDays;
+      const dailyAverage = Number((totalOut / windowDays).toFixed(1));
 
       if (product.stock <= 0) {
         return {
@@ -117,7 +117,7 @@ export function getForecasts(
       return {
         productId: product.id,
         daysRemaining,
-        dailyAverage: Number(dailyAverage.toFixed(1)),
+        dailyAverage,
         message:
           daysRemaining === 0
             ? "O estoque atual provavelmente será insuficiente ainda hoje."

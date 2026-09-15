@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -14,14 +15,38 @@ import { formatDayLabel } from "@/lib/analytics";
 import type { DailyFlow } from "@/lib/types";
 
 export function FlowChart({ data }: { data: DailyFlow[] }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const chartData = data.map((d) => ({
     ...d,
     label: formatDayLabel(d.date),
   }));
 
+  const hasActivity = chartData.some((d) => d.entradas > 0 || d.saidas > 0);
+
+  if (!mounted) {
+    return (
+      <div className="flex h-[280px] w-full items-center justify-center text-sm text-slate-400">
+        Carregando gráfico…
+      </div>
+    );
+  }
+
+  if (!hasActivity) {
+    return (
+      <div className="flex h-[280px] w-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/80 text-sm text-slate-500">
+        Sem movimentações nos últimos 7 dias para montar o gráfico.
+      </div>
+    );
+  }
+
   return (
-    <div className="h-[280px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-[280px] w-full min-w-0">
+      <ResponsiveContainer width="100%" height={280} minWidth={0}>
         <AreaChart
           data={chartData}
           margin={{ top: 8, right: 8, left: -12, bottom: 0 }}

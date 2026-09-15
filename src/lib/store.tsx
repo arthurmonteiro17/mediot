@@ -54,8 +54,14 @@ export function MediotProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     setLoading(true);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
+
     try {
-      const response = await fetch("/api/bootstrap", { cache: "no-store" });
+      const response = await fetch("/api/bootstrap", {
+        cache: "no-store",
+        signal: controller.signal,
+      });
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error ?? "Não foi possível carregar o sistema.");
@@ -67,10 +73,17 @@ export function MediotProvider({ children }: { children: ReactNode }) {
       setError(null);
       setReady(true);
     } catch (err) {
+      const aborted =
+        err instanceof DOMException && err.name === "AbortError";
       setError(
-        err instanceof Error ? err.message : "Falha ao carregar dados do banco.",
+        aborted
+          ? "O carregamento do banco demorou demais. Tente novamente."
+          : err instanceof Error
+            ? err.message
+            : "Falha ao carregar dados do banco.",
       );
     } finally {
+      window.clearTimeout(timeout);
       setLoading(false);
     }
   }, []);

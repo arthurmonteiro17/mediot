@@ -21,7 +21,7 @@ import { ArrowLeftRight, Boxes } from "lucide-react";
 export default function DashboardPage() {
   const { products, movements, hospital } = useMediot();
   const stats = getDashboardStats(products);
-  const flow = getDailyFlow(movements, 7, hospital.lastSync);
+  const flow = getDailyFlow(movements, 7);
   const alerts = getAlerts(products, movements, hospital.lastSync);
   const forecasts = getForecasts(products, movements);
   const recent = getSortedMovements(movements, 8);

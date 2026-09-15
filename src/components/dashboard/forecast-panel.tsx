@@ -46,8 +46,11 @@ export function ForecastPanel({ forecasts }: { forecasts: Forecast[] }) {
                 </div>
                 <p className="text-sm text-slate-600">{forecast.message}</p>
                 <p className="mt-2 text-xs text-slate-500">
-                  Consumo médio: {forecast.dailyAverage} {product.unit}/dia ·
-                  estoque atual: {product.stock} {product.unit}
+                  Consumo médio: {forecast.dailyAverage.toLocaleString("pt-BR", {
+                    maximumFractionDigits: 1,
+                  })}{" "}
+                  {product.unit}/dia · estoque atual: {product.stock}{" "}
+                  {product.unit}
                 </p>
               </div>
             );
