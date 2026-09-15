@@ -41,4 +41,3 @@ npm run db:reset   # zera e recria o banco
 - Next.js (App Router) + TypeScript
 - Prisma + SQLite
 - Tailwind CSS + shadcn/ui
-- Recharts

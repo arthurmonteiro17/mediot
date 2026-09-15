@@ -51,10 +51,12 @@ export function MovementsTable({
               <button
                 key={value}
                 type="button"
+                aria-pressed={filter === value}
+                data-filter={value}
                 className={
                   filter === value
-                    ? "inline-flex h-7 items-center rounded-lg bg-teal-700 px-2.5 text-[0.8rem] font-medium text-white hover:bg-teal-800"
-                    : "inline-flex h-7 items-center rounded-lg border border-slate-200 bg-white px-2.5 text-[0.8rem] font-medium text-slate-700 hover:bg-slate-50"
+                    ? "inline-flex h-8 items-center rounded-lg bg-teal-700 px-3 text-sm font-medium text-white hover:bg-teal-800"
+                    : "inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                 }
                 onClick={() => setFilter(value)}
               >
@@ -65,6 +67,12 @@ export function MovementsTable({
         )}
       </CardHeader>
       <CardContent className="pt-0">
+        {showFilters && (
+          <p className="mb-3 text-xs text-slate-500">
+            Mostrando {filtered.length} de {movements.length} registros
+            {filter !== "todos" ? ` · filtro: ${filter}` : ""}
+          </p>
+        )}
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
