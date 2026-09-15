@@ -38,10 +38,27 @@ type MediotStore = {
 const fallbackHospital: HospitalInfo = {
   name: "Hospital São Lucas",
   sector: "Almoxarifado Central",
-  lastSync: new Date(0).toISOString(),
+  lastSync: new Date().toISOString(),
 };
 
 const MediotContext = createContext<MediotStore | null>(null);
+
+async function fetchBootstrap(signal?: AbortSignal) {
+  const response = await fetch("/api/bootstrap", {
+    cache: "no-store",
+    signal,
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error ?? "Não foi possível carregar o sistema.");
+  }
+  return data as {
+    hospital: HospitalInfo;
+    staff: Staff[];
+    products: Product[];
+    movements: Movement[];
+  };
+}
 
 export function MediotProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -52,45 +69,74 @@ export function MediotProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 12000);
-
-    try {
-      const response = await fetch("/api/bootstrap", {
-        cache: "no-store",
-        signal: controller.signal,
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error ?? "Não foi possível carregar o sistema.");
-      }
+  const applyBootstrap = useCallback(
+    (data: {
+      hospital: HospitalInfo;
+      staff: Staff[];
+      products: Product[];
+      movements: Movement[];
+    }) => {
       setHospital(data.hospital);
       setStaff(data.staff);
       setProducts(data.products);
       setMovements(data.movements);
       setError(null);
       setReady(true);
+    },
+    [],
+  );
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchBootstrap();
+      applyBootstrap(data);
     } catch (err) {
-      const aborted =
-        err instanceof DOMException && err.name === "AbortError";
       setError(
-        aborted
-          ? "O carregamento do banco demorou demais. Tente novamente."
-          : err instanceof Error
-            ? err.message
-            : "Falha ao carregar dados do banco.",
+        err instanceof Error ? err.message : "Falha ao carregar dados do banco.",
       );
     } finally {
-      window.clearTimeout(timeout);
       setLoading(false);
     }
-  }, []);
+  }, [applyBootstrap]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      controller.abort();
+    }, 15000);
+
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await fetchBootstrap(controller.signal);
+        if (cancelled) return;
+        applyBootstrap(data);
+      } catch (err) {
+        if (cancelled) return;
+        const timedOut =
+          err instanceof DOMException && err.name === "AbortError";
+        setError(
+          timedOut
+            ? "O carregamento do banco demorou demais. Tente novamente."
+            : err instanceof Error
+              ? err.message
+              : "Falha ao carregar dados do banco.",
+        );
+      } finally {
+        window.clearTimeout(timeout);
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [applyBootstrap]);
 
   const createProduct = useCallback(async (input: CreateProductInput) => {
     try {
