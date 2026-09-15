@@ -1,6 +1,21 @@
+"use client";
+
+import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FlowChart } from "@/components/dashboard/flow-chart";
 import type { DailyFlow } from "@/lib/types";
+
+const FlowChart = dynamic(
+  () =>
+    import("@/components/dashboard/flow-chart").then((mod) => mod.FlowChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[280px] w-full items-center justify-center text-sm text-slate-400">
+        Carregando gráfico…
+      </div>
+    ),
+  },
+);
 
 export function FlowSection({ data }: { data: DailyFlow[] }) {
   return (

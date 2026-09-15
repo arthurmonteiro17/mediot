@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -15,26 +14,12 @@ import { formatDayLabel } from "@/lib/analytics";
 import type { DailyFlow } from "@/lib/types";
 
 export function FlowChart({ data }: { data: DailyFlow[] }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const chartData = data.map((d) => ({
     ...d,
     label: formatDayLabel(d.date),
   }));
 
   const hasActivity = chartData.some((d) => d.entradas > 0 || d.saidas > 0);
-
-  if (!mounted) {
-    return (
-      <div className="flex h-[280px] w-full items-center justify-center text-sm text-slate-400">
-        Carregando gráfico…
-      </div>
-    );
-  }
 
   if (!hasActivity) {
     return (
@@ -46,7 +31,7 @@ export function FlowChart({ data }: { data: DailyFlow[] }) {
 
   return (
     <div className="h-[280px] w-full min-w-0">
-      <ResponsiveContainer width="100%" height={280} minWidth={0}>
+      <ResponsiveContainer width="100%" height={280} debounce={50}>
         <AreaChart
           data={chartData}
           margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
@@ -94,6 +79,7 @@ export function FlowChart({ data }: { data: DailyFlow[] }) {
             stroke="#0f766e"
             fill="url(#fillEntradas)"
             strokeWidth={2.2}
+            isAnimationActive={false}
           />
           <Area
             type="monotone"
@@ -102,6 +88,7 @@ export function FlowChart({ data }: { data: DailyFlow[] }) {
             stroke="#c2410c"
             fill="url(#fillSaidas)"
             strokeWidth={2.2}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>

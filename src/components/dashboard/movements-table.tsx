@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -49,19 +48,18 @@ export function MovementsTable({
                 ["entrada", "Entradas"],
               ] as const
             ).map(([value, label]) => (
-              <Button
+              <button
                 key={value}
-                size="sm"
-                variant={filter === value ? "default" : "outline"}
+                type="button"
                 className={
                   filter === value
-                    ? "bg-teal-700 hover:bg-teal-800"
-                    : "border-slate-200 bg-white"
+                    ? "inline-flex h-7 items-center rounded-lg bg-teal-700 px-2.5 text-[0.8rem] font-medium text-white hover:bg-teal-800"
+                    : "inline-flex h-7 items-center rounded-lg border border-slate-200 bg-white px-2.5 text-[0.8rem] font-medium text-slate-700 hover:bg-slate-50"
                 }
                 onClick={() => setFilter(value)}
               >
                 {label}
-              </Button>
+              </button>
             ))}
           </div>
         )}
