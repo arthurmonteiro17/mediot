@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -15,25 +17,40 @@ import { formatDateTime, getStaffById } from "@/lib/analytics";
 import { useMediot } from "@/lib/store";
 import type { Movement, MovementType } from "@/lib/types";
 import { ArrowDownLeft, ArrowUpRight, Radio } from "lucide-react";
+import { Suspense } from "react";
 
 type Filter = "todos" | MovementType;
 
-export function MovementsTable({
+function MovementsTableInner({
   movements,
   title = "Movimentações recentes",
   showFilters = true,
+  queryKey = "mov",
 }: {
   movements: Movement[];
   title?: string;
   showFilters?: boolean;
+  queryKey?: string;
 }) {
   const { products } = useMediot();
-  const [filter, setFilter] = useState<Filter>("todos");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const raw = searchParams.get(queryKey);
+  const filter: Filter =
+    raw === "saida" || raw === "entrada" ? raw : "todos";
 
   const filtered = useMemo(() => {
     if (filter === "todos") return movements;
     return movements.filter((m) => m.type === filter);
   }, [filter, movements]);
+
+  function hrefFor(value: Filter) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "todos") params.delete(queryKey);
+    else params.set(queryKey, value);
+    const qs = params.toString();
+    return qs ? `${pathname}?${qs}` : pathname;
+  }
 
   return (
     <Card className="border-slate-200/80 bg-white/85 shadow-none backdrop-blur">
@@ -48,9 +65,10 @@ export function MovementsTable({
                 ["entrada", "Entradas"],
               ] as const
             ).map(([value, label]) => (
-              <button
+              <Link
                 key={value}
-                type="button"
+                href={hrefFor(value)}
+                scroll={false}
                 aria-pressed={filter === value}
                 data-filter={value}
                 className={
@@ -58,10 +76,9 @@ export function MovementsTable({
                     ? "inline-flex h-8 items-center rounded-lg bg-teal-700 px-3 text-sm font-medium text-white hover:bg-teal-800"
                     : "inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                 }
-                onClick={() => setFilter(value)}
               >
                 {label}
-              </button>
+              </Link>
             ))}
           </div>
         )}
@@ -144,5 +161,26 @@ export function MovementsTable({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+export function MovementsTable(props: {
+  movements: Movement[];
+  title?: string;
+  showFilters?: boolean;
+  queryKey?: string;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <Card className="border-slate-200/80 bg-white/85 shadow-none">
+          <CardContent className="p-6 text-sm text-slate-500">
+            Carregando movimentações…
+          </CardContent>
+        </Card>
+      }
+    >
+      <MovementsTableInner {...props} />
+    </Suspense>
   );
 }
