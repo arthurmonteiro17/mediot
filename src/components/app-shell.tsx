@@ -86,7 +86,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        {error && (
+        {error && !ready && (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
             <p className="font-medium">Não foi possível carregar o banco.</p>
             <p className="mt-1 opacity-90">{error}</p>
@@ -105,13 +105,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         ) : ready ? (
           children
-        ) : (
-          !error && (
-            <div className="rounded-2xl border border-slate-200 bg-white/80 px-6 py-16 text-center text-slate-500">
-              Aguardando dados do almoxarifado…
-            </div>
-          )
-        )}
+        ) : null}
       </div>
     </div>
   );

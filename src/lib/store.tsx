@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -17,6 +16,7 @@ import type {
   RegisterMovementInput,
   Staff,
 } from "@/lib/types";
+import type { BootstrapPayload } from "@/components/providers";
 
 type MediotStore = {
   ready: boolean;
@@ -43,48 +43,46 @@ const fallbackHospital: HospitalInfo = {
 
 const MediotContext = createContext<MediotStore | null>(null);
 
-async function fetchBootstrap(signal?: AbortSignal) {
-  const response = await fetch("/api/bootstrap", {
-    cache: "no-store",
-    signal,
-  });
+async function fetchBootstrap() {
+  const response = await fetch("/api/bootstrap", { cache: "no-store" });
   const data = await response.json();
   if (!response.ok) {
     throw new Error(data.error ?? "Não foi possível carregar o sistema.");
   }
-  return data as {
-    hospital: HospitalInfo;
-    staff: Staff[];
-    products: Product[];
-    movements: Movement[];
-  };
+  return data as BootstrapPayload;
 }
 
-export function MediotProvider({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [hospital, setHospital] = useState<HospitalInfo>(fallbackHospital);
-  const [staff, setStaff] = useState<Staff[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [movements, setMovements] = useState<Movement[]>([]);
-
-  const applyBootstrap = useCallback(
-    (data: {
-      hospital: HospitalInfo;
-      staff: Staff[];
-      products: Product[];
-      movements: Movement[];
-    }) => {
-      setHospital(data.hospital);
-      setStaff(data.staff);
-      setProducts(data.products);
-      setMovements(data.movements);
-      setError(null);
-      setReady(true);
-    },
-    [],
+export function MediotProvider({
+  children,
+  initialData,
+}: {
+  children: ReactNode;
+  initialData: BootstrapPayload | null;
+}) {
+  const [ready, setReady] = useState(Boolean(initialData));
+  const [loading, setLoading] = useState(!initialData);
+  const [error, setError] = useState<string | null>(
+    initialData ? null : "Não foi possível carregar o banco na inicialização.",
   );
+  const [hospital, setHospital] = useState<HospitalInfo>(
+    initialData?.hospital ?? fallbackHospital,
+  );
+  const [staff, setStaff] = useState<Staff[]>(initialData?.staff ?? []);
+  const [products, setProducts] = useState<Product[]>(
+    initialData?.products ?? [],
+  );
+  const [movements, setMovements] = useState<Movement[]>(
+    initialData?.movements ?? [],
+  );
+
+  const applyBootstrap = useCallback((data: BootstrapPayload) => {
+    setHospital(data.hospital);
+    setStaff(data.staff);
+    setProducts(data.products);
+    setMovements(data.movements);
+    setError(null);
+    setReady(true);
+  }, []);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -99,43 +97,6 @@ export function MediotProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [applyBootstrap]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => {
-      controller.abort();
-    }, 15000);
-
-    (async () => {
-      setLoading(true);
-      try {
-        const data = await fetchBootstrap(controller.signal);
-        if (cancelled) return;
-        applyBootstrap(data);
-      } catch (err) {
-        if (cancelled) return;
-        const timedOut =
-          err instanceof DOMException && err.name === "AbortError";
-        setError(
-          timedOut
-            ? "O carregamento do banco demorou demais. Tente novamente."
-            : err instanceof Error
-              ? err.message
-              : "Falha ao carregar dados do banco.",
-        );
-      } finally {
-        window.clearTimeout(timeout);
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeout);
-      controller.abort();
-    };
   }, [applyBootstrap]);
 
   const createProduct = useCallback(async (input: CreateProductInput) => {
