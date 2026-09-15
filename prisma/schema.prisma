@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model HospitalSettings {
+  id       Int      @id @default(1)
+  name     String
+  sector   String
+  lastSync DateTime
+}
+
+model Staff {
+  id        String     @id
+  name      String
+  role      String
+  rfidCard  String     @unique
+  movements Movement[]
+}
+
+model Product {
+  id            String     @id @default(cuid())
+  name          String
+  sku           String     @unique
+  category      String
+  unit          String
+  stock         Int
+  minStock      Int
+  criticalStock Int
+  rfidTag       String     @unique
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  movements     Movement[]
+}
+
+model Movement {
+  id        String   @id @default(cuid())
+  productId String
+  staffId   String
+  type      String
+  quantity  Int
+  timestamp DateTime
+  source    String
+  product   Product  @relation(fields: [productId], references: [id])
+  staff     Staff    @relation(fields: [staffId], references: [id])
+
+  @@index([timestamp])
+  @@index([productId])
+}

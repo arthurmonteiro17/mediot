@@ -15,7 +15,7 @@ const links = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { hospital } = useMediot();
+  const { hospital, loading, ready, error, refresh } = useMediot();
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -78,13 +78,34 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <p className="text-xs text-slate-500 lg:text-right">
-            Última sync · {formatDateTime(hospital.lastSync)}
+            {loading && !ready
+              ? "Carregando banco…"
+              : `Última sync · ${formatDateTime(hospital.lastSync)}`}
           </p>
         </div>
       </div>
 
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        {children}
+        {error && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+            <p className="font-medium">Não foi possível carregar o banco.</p>
+            <p className="mt-1 opacity-90">{error}</p>
+            <button
+              type="button"
+              onClick={() => void refresh()}
+              className="mt-2 font-medium underline underline-offset-2"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+        {loading && !ready ? (
+          <div className="rounded-2xl border border-slate-200 bg-white/80 px-6 py-16 text-center text-slate-500">
+            Carregando estoque e movimentações do banco SQLite…
+          </div>
+        ) : (
+          children
+        )}
       </div>
     </div>
   );

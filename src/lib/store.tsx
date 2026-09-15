@@ -2,181 +2,169 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
-import { hospital as hospitalSeed, movements as movementsSeed, products as productsSeed, staff } from "@/lib/data";
-import type { Movement, MovementType, Product } from "@/lib/types";
-
-export type RegisterMovementInput = {
-  productId: string;
-  staffId: string;
-  type: MovementType;
-  quantity: number;
-  source?: Movement["source"];
-};
-
-export type CreateProductInput = {
-  name: string;
-  sku: string;
-  category: string;
-  unit: string;
-  stock: number;
-  minStock: number;
-  criticalStock: number;
-  rfidTag: string;
-};
+import type {
+  CreateProductInput,
+  HospitalInfo,
+  Movement,
+  Product,
+  RegisterMovementInput,
+  Staff,
+} from "@/lib/types";
 
 type MediotStore = {
-  hospital: typeof hospitalSeed;
-  staff: typeof staff;
+  ready: boolean;
+  loading: boolean;
+  error: string | null;
+  hospital: HospitalInfo;
+  staff: Staff[];
   products: Product[];
   movements: Movement[];
+  refresh: () => Promise<void>;
   registerMovement: (
     input: RegisterMovementInput,
-  ) => { ok: true; movement: Movement } | { ok: false; error: string };
+  ) => Promise<{ ok: true; movement: Movement } | { ok: false; error: string }>;
   createProduct: (
     input: CreateProductInput,
-  ) => { ok: true; product: Product } | { ok: false; error: string };
-  updateProductThresholds: (
-    productId: string,
-    minStock: number,
-    criticalStock: number,
-  ) => { ok: true } | { ok: false; error: string };
+  ) => Promise<{ ok: true; product: Product } | { ok: false; error: string }>;
+};
+
+const fallbackHospital: HospitalInfo = {
+  name: "Hospital São Lucas",
+  sector: "Almoxarifado Central",
+  lastSync: new Date(0).toISOString(),
 };
 
 const MediotContext = createContext<MediotStore | null>(null);
 
-function newId(prefix: string) {
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-}
-
 export function MediotProvider({ children }: { children: ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(() =>
-    productsSeed.map((p) => ({ ...p })),
-  );
-  const [movements, setMovements] = useState<Movement[]>(() =>
-    movementsSeed.map((m) => ({ ...m })),
-  );
-  const [lastSync, setLastSync] = useState(hospitalSeed.lastSync);
+  const [ready, setReady] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hospital, setHospital] = useState<HospitalInfo>(fallbackHospital);
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [movements, setMovements] = useState<Movement[]>([]);
 
-  const value = useMemo<MediotStore>(() => {
-    return {
-      hospital: { ...hospitalSeed, lastSync },
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/bootstrap", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error ?? "Não foi possível carregar o sistema.");
+      }
+      setHospital(data.hospital);
+      setStaff(data.staff);
+      setProducts(data.products);
+      setMovements(data.movements);
+      setError(null);
+      setReady(true);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Falha ao carregar dados do banco.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const createProduct = useCallback(async (input: CreateProductInput) => {
+    try {
+      const response = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { ok: false as const, error: data.error ?? "Erro ao cadastrar." };
+      }
+
+      setProducts((current) =>
+        [...current, data.product].sort((a, b) => a.name.localeCompare(b.name)),
+      );
+      if (data.lastSync) {
+        setHospital((current) => ({ ...current, lastSync: data.lastSync }));
+      }
+      return { ok: true as const, product: data.product as Product };
+    } catch {
+      return {
+        ok: false as const,
+        error: "Falha de rede ao cadastrar o produto.",
+      };
+    }
+  }, []);
+
+  const registerMovement = useCallback(async (input: RegisterMovementInput) => {
+    try {
+      const response = await fetch("/api/movements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          ok: false as const,
+          error: data.error ?? "Erro ao registrar movimentação.",
+        };
+      }
+
+      setMovements((current) => [data.movement as Movement, ...current]);
+      setProducts((current) =>
+        current.map((product) =>
+          product.id === data.product.id ? (data.product as Product) : product,
+        ),
+      );
+      if (data.lastSync) {
+        setHospital((current) => ({ ...current, lastSync: data.lastSync }));
+      }
+      return { ok: true as const, movement: data.movement as Movement };
+    } catch {
+      return {
+        ok: false as const,
+        error: "Falha de rede ao registrar a movimentação.",
+      };
+    }
+  }, []);
+
+  const value = useMemo<MediotStore>(
+    () => ({
+      ready,
+      loading,
+      error,
+      hospital,
       staff,
       products,
       movements,
-      registerMovement(input) {
-        const quantity = Number(input.quantity);
-        if (!Number.isFinite(quantity) || quantity <= 0) {
-          return { ok: false, error: "Informe uma quantidade válida maior que zero." };
-        }
-
-        const product = products.find((p) => p.id === input.productId);
-        if (!product) {
-          return { ok: false, error: "Produto não encontrado." };
-        }
-
-        const person = staff.find((s) => s.id === input.staffId);
-        if (!person) {
-          return { ok: false, error: "Funcionário não encontrado." };
-        }
-
-        if (input.type === "saida" && quantity > product.stock) {
-          return {
-            ok: false,
-            error: `Estoque insuficiente. Disponível: ${product.stock} ${product.unit}.`,
-          };
-        }
-
-        const timestamp = new Date().toISOString();
-        const movement: Movement = {
-          id: newId("m"),
-          productId: input.productId,
-          staffId: input.staffId,
-          type: input.type,
-          quantity,
-          timestamp,
-          source: input.source ?? "manual",
-        };
-
-        setProducts((current) =>
-          current.map((p) =>
-            p.id === input.productId
-              ? {
-                  ...p,
-                  stock:
-                    input.type === "entrada"
-                      ? p.stock + quantity
-                      : p.stock - quantity,
-                }
-              : p,
-          ),
-        );
-        setMovements((current) => [movement, ...current]);
-        setLastSync(timestamp);
-
-        return { ok: true, movement };
-      },
-      createProduct(input) {
-        const name = input.name.trim();
-        const sku = input.sku.trim().toUpperCase();
-        if (!name || !sku) {
-          return { ok: false, error: "Nome e SKU são obrigatórios." };
-        }
-        if (products.some((p) => p.sku.toUpperCase() === sku)) {
-          return { ok: false, error: "Já existe um produto com este SKU." };
-        }
-        if (input.stock < 0 || input.minStock < 0 || input.criticalStock < 0) {
-          return { ok: false, error: "Valores de estoque não podem ser negativos." };
-        }
-        if (input.criticalStock > input.minStock) {
-          return {
-            ok: false,
-            error: "O estoque crítico deve ser menor ou igual ao mínimo.",
-          };
-        }
-
-        const product: Product = {
-          id: newId("p"),
-          name,
-          sku,
-          category: input.category.trim() || "Geral",
-          unit: input.unit.trim() || "un",
-          stock: input.stock,
-          minStock: input.minStock,
-          criticalStock: input.criticalStock,
-          rfidTag: input.rfidTag.trim() || `TAG-${sku}`,
-        };
-
-        setProducts((current) => [...current, product]);
-        setLastSync(new Date().toISOString());
-        return { ok: true, product };
-      },
-      updateProductThresholds(productId, minStock, criticalStock) {
-        if (minStock < 0 || criticalStock < 0) {
-          return { ok: false, error: "Limites não podem ser negativos." };
-        }
-        if (criticalStock > minStock) {
-          return {
-            ok: false,
-            error: "O estoque crítico deve ser menor ou igual ao mínimo.",
-          };
-        }
-        if (!products.some((p) => p.id === productId)) {
-          return { ok: false, error: "Produto não encontrado." };
-        }
-        setProducts((current) =>
-          current.map((p) =>
-            p.id === productId ? { ...p, minStock, criticalStock } : p,
-          ),
-        );
-        return { ok: true };
-      },
-    };
-  }, [lastSync, movements, products]);
+      refresh,
+      registerMovement,
+      createProduct,
+    }),
+    [
+      createProduct,
+      error,
+      hospital,
+      loading,
+      movements,
+      products,
+      ready,
+      refresh,
+      registerMovement,
+      staff,
+    ],
+  );
 
   return (
     <MediotContext.Provider value={value}>{children}</MediotContext.Provider>
@@ -190,3 +178,5 @@ export function useMediot() {
   }
   return ctx;
 }
+
+export type { CreateProductInput, RegisterMovementInput };

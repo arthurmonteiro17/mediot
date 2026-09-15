@@ -30,7 +30,7 @@ export default function DashboardPage() {
     <>
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-teal-800">MedIoT 3.0</p>
+          <p className="text-sm font-medium text-teal-800">MedIoT · banco real</p>
           <h1 className="font-display text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
             Dashboard operacional
           </h1>

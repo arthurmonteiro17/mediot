@@ -80,12 +80,12 @@ export default function EstoquePage() {
     };
   }, [products]);
 
-  function submitProduct(e: React.FormEvent) {
+  async function submitProduct(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSuccess(null);
 
-    const result = createProduct({
+    const result = await createProduct({
       name: form.name,
       sku: form.sku,
       category: form.category,

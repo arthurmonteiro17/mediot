@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MovementsTable } from "@/components/dashboard/movements-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,14 +20,23 @@ import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 
 export default function MovimentacoesPage() {
   const { products, movements, staff, registerMovement } = useMediot();
-  const [productId, setProductId] = useState(products[0]?.id ?? "");
-  const [staffId, setStaffId] = useState(staff[0]?.id ?? "");
+  const [productId, setProductId] = useState("");
+  const [staffId, setStaffId] = useState("");
   const [type, setType] = useState<MovementType>("saida");
   const [quantity, setQuantity] = useState("1");
   const [source, setSource] = useState<"manual" | "rfid">("manual");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [listFilter, setListFilter] = useState<"todos" | MovementType>("todos");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!productId && products[0]) setProductId(products[0].id);
+  }, [productId, products]);
+
+  useEffect(() => {
+    if (!staffId && staff[0]) setStaffId(staff[0].id);
+  }, [staff, staffId]);
 
   const selectedProduct = products.find((p) => p.id === productId);
   const sorted = useMemo(() => getSortedMovements(movements), [movements]);
@@ -46,18 +55,21 @@ export default function MovimentacoesPage() {
     return { total: movements.length, entradas, saidas };
   }, [movements]);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setSaving(true);
 
-    const result = registerMovement({
+    const result = await registerMovement({
       productId,
       staffId,
       type,
       quantity: Number(quantity),
       source,
     });
+
+    setSaving(false);
 
     if (!result.ok) {
       setError(result.error);
@@ -230,8 +242,14 @@ export default function MovimentacoesPage() {
                 </p>
               )}
 
-              <Button type="submit" className="bg-teal-800 hover:bg-teal-900">
-                Registrar {type === "entrada" ? "entrada" : "saída"}
+              <Button
+                type="submit"
+                disabled={saving || !productId || !staffId}
+                className="bg-teal-800 hover:bg-teal-900"
+              >
+                {saving
+                  ? "Salvando…"
+                  : `Registrar ${type === "entrada" ? "entrada" : "saída"}`}
               </Button>
             </form>
           </CardContent>

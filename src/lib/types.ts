@@ -52,3 +52,28 @@ export interface DailyFlow {
   entradas: number;
   saidas: number;
 }
+
+export type RegisterMovementInput = {
+  productId: string;
+  staffId: string;
+  type: MovementType;
+  quantity: number;
+  source?: Movement["source"];
+};
+
+export type CreateProductInput = {
+  name: string;
+  sku: string;
+  category: string;
+  unit: string;
+  stock: number;
+  minStock: number;
+  criticalStock: number;
+  rfidTag: string;
+};
+
+export type HospitalInfo = {
+  name: string;
+  sector: string;
+  lastSync: string;
+};
