@@ -25,9 +25,14 @@ Abra [http://127.0.0.1:43123](http://127.0.0.1:43123).
 
 - Banco: SQLite (`prisma/dev.db`)
 - ORM: Prisma
-- APIs: `GET /api/bootstrap`, `POST /api/products`, `POST /api/movements`
+- APIs: `GET /api/bootstrap`, `POST /api/products`, `POST /api/movements`, `POST /api/rfid/scan`
 
-Cadastros e movimentações sobrevivem ao refresh da página. A integração com ESP32/RFID físico ainda não está ligada — a origem "RFID" no formulário simula o evento que o hardware enviará depois.
+Cadastros e movimentações sobrevivem ao refresh da página. A integração física usa `POST /api/rfid/scan` (ESP8266 envia UID do cartão + UID do produto).
+
+### RFID / ESP8266
+
+- Firmware de referência: [`firmware/esp8266_rfid_scan/`](firmware/esp8266_rfid_scan/)
+- Collection Postman: [`postman/MedIoT-RFID.postman_collection.json`](postman/MedIoT-RFID.postman_collection.json)
 
 ### Utilitários
 

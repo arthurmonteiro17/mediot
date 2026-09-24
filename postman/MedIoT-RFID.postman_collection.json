@@ -1,0 +1,153 @@
+{
+  "info": {
+    "name": "MedIoT RFID",
+    "description": "Testes da API RFID do MedIoT (ESP8266).\n\n**Ordem sugerida do toggle:**\n1. Bootstrap\n2. RFID Scan — Saída (User A + Produto X)\n3. RFID Scan — Devolução (mesmo User A)\n4. RFID Scan — Saída de novo (User A) — prepara o estado \"em saída\"\n5. RFID Scan — Outro usuário tenta devolver (User B) → espera 403\n6. RFID Scan — Devolução (User A) — limpa o estado\n7. RFID Scan — UID inválido → 404\n8. Listar movimentações\n\n**UIDs do seed:**\n- User A: CARD-8841 (João Mendes)\n- User B: CARD-2204 (Ana Ribeiro)\n- Produto X: TAG-LUV-M-01 (Luva de procedimento M)\n\nSe o produto já estiver em saída (última movimentação = saida do João), o passo 2 pode retornar `devolucao` em vez de `saida`. Nesse caso, continue a partir do passo 3/4 para montar o cenário de 403.\n\nbaseUrl padrão: http://127.0.0.1:43123",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:43123"
+    },
+    {
+      "key": "userA",
+      "value": "CARD-8841"
+    },
+    {
+      "key": "userB",
+      "value": "CARD-2204"
+    },
+    {
+      "key": "productX",
+      "value": "TAG-LUV-M-01"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Bootstrap",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/bootstrap",
+        "description": "Lista hospital, produtos, staff e movimentações. Esperado: 200."
+      }
+    },
+    {
+      "name": "2. RFID Scan — Saída (User A + Produto X)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userUid\": \"{{userA}}\",\n  \"productUid\": \"{{productX}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/rfid/scan",
+        "description": "Primeira passagem com produto em estoque. Esperado: 201 e action \"saida\"."
+      }
+    },
+    {
+      "name": "3. RFID Scan — Devolução (mesmo User A)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userUid\": \"{{userA}}\",\n  \"productUid\": \"{{productX}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/rfid/scan",
+        "description": "Mesmo usuário e mesmo produto após uma saída. Esperado: 201 e action \"devolucao\"."
+      }
+    },
+    {
+      "name": "4. RFID Scan — Saída de novo (User A, prepara 403)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userUid\": \"{{userA}}\",\n  \"productUid\": \"{{productX}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/rfid/scan",
+        "description": "Coloca o produto novamente em saída com User A antes do teste de outro usuário. Esperado: 201 action \"saida\"."
+      }
+    },
+    {
+      "name": "5. RFID Scan — Outro usuário tenta devolver",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userUid\": \"{{userB}}\",\n  \"productUid\": \"{{productX}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/rfid/scan",
+        "description": "User B tenta devolver produto retirado por User A. Esperado: 403."
+      }
+    },
+    {
+      "name": "6. RFID Scan — Devolução (User A limpa estado)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userUid\": \"{{userA}}\",\n  \"productUid\": \"{{productX}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/rfid/scan",
+        "description": "User A devolve após o teste 403. Esperado: 201 action \"devolucao\"."
+      }
+    },
+    {
+      "name": "7. RFID Scan — UID inválido",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userUid\": \"CARD-INEXISTENTE\",\n  \"productUid\": \"TAG-INEXISTENTE\"\n}"
+        },
+        "url": "{{baseUrl}}/api/rfid/scan",
+        "description": "UIDs não cadastrados. Esperado: 404."
+      }
+    },
+    {
+      "name": "8. Listar movimentações",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/movements",
+        "description": "Confere histórico após os scans. Esperado: 200."
+      }
+    }
+  ]
+}

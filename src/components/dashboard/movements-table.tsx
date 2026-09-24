@@ -105,6 +105,13 @@ function MovementsTableInner({
               const product = products.find((p) => p.id === movement.productId);
               const person = getStaffById(movement.staffId);
               const isExit = movement.type === "saida";
+              const isDevolucao =
+                !isExit && movement.source === "rfid";
+              const operationLabel = isExit
+                ? "Saída"
+                : isDevolucao
+                  ? "Devolução"
+                  : "Entrada";
               return (
                 <TableRow key={movement.id}>
                   <TableCell className="whitespace-nowrap text-slate-500">
@@ -129,7 +136,9 @@ function MovementsTableInner({
                         className={
                           isExit
                             ? "border-orange-200 bg-orange-50 text-orange-800"
-                            : "border-teal-200 bg-teal-50 text-teal-800"
+                            : isDevolucao
+                              ? "border-sky-200 bg-sky-50 text-sky-900"
+                              : "border-teal-200 bg-teal-50 text-teal-800"
                         }
                       >
                         {isExit ? (
@@ -137,7 +146,7 @@ function MovementsTableInner({
                         ) : (
                           <ArrowDownLeft className="size-3.5" />
                         )}
-                        {isExit ? "Saída" : "Entrada"}
+                        {operationLabel}
                       </Badge>
                       {movement.source === "rfid" && (
                         <span className="inline-flex items-center gap-1 text-xs text-slate-500">

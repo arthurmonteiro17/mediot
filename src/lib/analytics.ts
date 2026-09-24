@@ -195,7 +195,7 @@ export function getAlerts(
   alerts.push({
     id: "a-sync",
     severity: "info",
-    title: "ESP32 sincronizado via Wi-Fi",
+    title: "ESP8266 sincronizado via Wi-Fi",
     detail: "Leitor RFID do corredor B enviou o último lote de movimentações.",
     timestamp: lastSync,
   });

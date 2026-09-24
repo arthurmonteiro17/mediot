@@ -175,3 +175,98 @@ export async function registerMovementInDb(input: RegisterMovementInput) {
     throw error;
   }
 }
+
+export type RfidScanInput = {
+  userUid: string;
+  productUid: string;
+};
+
+export async function registerRfidScan(input: RfidScanInput) {
+  const userUid = input.userUid.trim();
+  const productUid = input.productUid.trim();
+
+  if (!userUid || !productUid) {
+    return {
+      ok: false as const,
+      status: 400 as const,
+      error: "Informe userUid e productUid.",
+    };
+  }
+
+  const staff = await prisma.staff.findUnique({
+    where: { rfidCard: userUid },
+  });
+  if (!staff) {
+    return {
+      ok: false as const,
+      status: 404 as const,
+      error: "Cartão RFID do funcionário não encontrado.",
+    };
+  }
+
+  const product = await prisma.product.findUnique({
+    where: { rfidTag: productUid },
+  });
+  if (!product) {
+    return {
+      ok: false as const,
+      status: 404 as const,
+      error: "Tag RFID do produto não encontrada.",
+    };
+  }
+
+  const lastMovement = await prisma.movement.findFirst({
+    where: { productId: product.id },
+    orderBy: { timestamp: "desc" },
+  });
+
+  let type: "entrada" | "saida";
+  let action: "saida" | "devolucao";
+
+  if (!lastMovement || lastMovement.type === "entrada") {
+    type = "saida";
+    action = "saida";
+  } else if (lastMovement.type === "saida") {
+    if (lastMovement.staffId !== staff.id) {
+      return {
+        ok: false as const,
+        status: 403 as const,
+        error:
+          "Produto retirado por outro usuário. Apenas quem retirou pode devolver.",
+      };
+    }
+    type = "entrada";
+    action = "devolucao";
+  } else {
+    return {
+      ok: false as const,
+      status: 400 as const,
+      error: "Estado de movimentação inválido para este produto.",
+    };
+  }
+
+  const result = await registerMovementInDb({
+    productId: product.id,
+    staffId: staff.id,
+    type,
+    quantity: 1,
+    source: "rfid",
+  });
+
+  if (!result.ok) {
+    return {
+      ok: false as const,
+      status: 400 as const,
+      error: result.error,
+    };
+  }
+
+  return {
+    ok: true as const,
+    action,
+    movement: result.movement,
+    product: result.product,
+    staff: mapStaff(staff),
+    lastSync: result.lastSync,
+  };
+}

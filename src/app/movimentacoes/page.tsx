@@ -226,7 +226,7 @@ export default function MovimentacoesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="manual">Manual</SelectItem>
-                    <SelectItem value="rfid">RFID / ESP32</SelectItem>
+                    <SelectItem value="rfid">RFID / ESP8266</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
