@@ -1,5 +1,6 @@
 import { format, parseISO, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatInTimeZone } from "date-fns-tz";
 import { hospital, staff } from "./data";
 import type {
   Alert,
@@ -10,6 +11,8 @@ import type {
   Staff,
   StockLevel,
 } from "./types";
+
+const BRASILIA_TZ = "America/Sao_Paulo";
 
 export function getStockLevel(product: Product): StockLevel {
   if (product.stock <= 0) return "zerado";
@@ -207,11 +210,18 @@ export function getAlerts(
 }
 
 export function formatDateTime(iso: string) {
-  return format(parseISO(iso), "dd MMM · HH:mm", { locale: ptBR });
+  return formatInTimeZone(parseISO(iso), BRASILIA_TZ, "dd MMM · HH:mm", {
+    locale: ptBR,
+  });
 }
 
 export function formatDayLabel(isoDate: string) {
-  return format(parseISO(`${isoDate}T12:00:00`), "EEE dd", { locale: ptBR });
+  return formatInTimeZone(
+    parseISO(`${isoDate}T12:00:00.000Z`),
+    BRASILIA_TZ,
+    "EEE dd",
+    { locale: ptBR },
+  );
 }
 
 export function stockLevelLabel(level: StockLevel) {
