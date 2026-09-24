@@ -3,13 +3,48 @@ import { registerRfidScan } from "@/lib/inventory";
 
 export const runtime = "nodejs";
 
+function parseScanBody(raw: string) {
+  const cleaned = raw.replace(/^\uFEFF/, "").trim();
+  let data: unknown;
+  try {
+    data = JSON.parse(cleaned);
+  } catch {
+    throw new Error(
+      "JSON inválido no body. Use exatamente: {\"userUid\":\"CARD-8841\",\"productUid\":\"TAG-LUV-M-01\"}",
+    );
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error("Body deve ser um objeto JSON.");
+  }
+  const record = data as Record<string, unknown>;
+  return {
+    userUid: String(record.userUid ?? "").replace(/[\u0000-\u001F]/g, "").trim(),
+    productUid: String(record.productUid ?? "")
+      .replace(/[\u0000-\u001F]/g, "")
+      .trim(),
+  };
+}
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const result = await registerRfidScan({
-      userUid: String(body.userUid ?? ""),
-      productUid: String(body.productUid ?? ""),
-    });
+    const raw = await request.text();
+    let payload: { userUid: string; productUid: string };
+    try {
+      payload = parseScanBody(raw);
+    } catch (error) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "JSON inválido no body.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const result = await registerRfidScan(payload);
 
     if (!result.ok) {
       return NextResponse.json(
