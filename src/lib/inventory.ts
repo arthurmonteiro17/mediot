@@ -182,8 +182,8 @@ export type RfidScanInput = {
 };
 
 export async function registerRfidScan(input: RfidScanInput) {
-  const userUid = input.userUid.trim();
-  const productUid = input.productUid.trim();
+  const userUid = input.userUid.trim().toUpperCase();
+  const productUid = input.productUid.trim().toUpperCase();
 
   if (!userUid || !productUid) {
     return {

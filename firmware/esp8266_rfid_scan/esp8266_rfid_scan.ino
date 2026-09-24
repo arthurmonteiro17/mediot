@@ -91,9 +91,9 @@ void setup() {
   delay(500);
   connectWifi();
 
-  // Exemplo com UIDs do seed MedIoT (substitua pelos UIDs reais do MFRC522):
-  // User A = CARD-8841 (João), Produto = TAG-LUV-M-01 (Luva M)
-  postRfidScan("CARD-8841", "TAG-LUV-M-01");
+  // Exemplo com UIDs reais do MedIoT (substitua pelos lidos no MFRC522 se diferente):
+  // Arthur = 67:52:B0:A0, Furadeira = F5:76:82:B1
+  postRfidScan("67:52:B0:A0", "F5:76:82:B1");
 }
 
 void loop() {

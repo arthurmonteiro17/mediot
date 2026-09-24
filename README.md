@@ -1,6 +1,6 @@
 # MedIoT
 
-Sistema web do **MedIoT** — gerenciamento de estoque hospitalar com dashboard, controle de materiais, movimentações e **banco SQLite** via API.
+Sistema web do **MedIoT** — gerenciamento de estoque/almoxarifado com dashboard, ferramentas RFID, movimentações e banco SQLite via API.
 
 ## Como rodar
 

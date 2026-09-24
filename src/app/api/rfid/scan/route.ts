@@ -10,7 +10,7 @@ function parseScanBody(raw: string) {
     data = JSON.parse(cleaned);
   } catch {
     throw new Error(
-      "JSON inválido no body. Use exatamente: {\"userUid\":\"CARD-8841\",\"productUid\":\"TAG-LUV-M-01\"}",
+      "JSON inválido no body. Use exatamente: {\"userUid\":\"67:52:B0:A0\",\"productUid\":\"F5:76:82:B1\"}",
     );
   }
   if (!data || typeof data !== "object" || Array.isArray(data)) {

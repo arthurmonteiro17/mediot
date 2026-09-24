@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "MedIoT RFID",
-    "description": "Testes da API RFID do MedIoT (ESP8266).\n\n**Ordem sugerida:**\n1. Bootstrap\n2. Saída (João + Luva)\n3. Devolução (João + Luva)\n4. Saída de novo (João)\n5. Ana tenta devolver → 403\n6. João devolve (limpa)\n7. UID inválido → 404\n8. Listar movimentações\n\nUIDs do seed já vêm fixos no body (sem variáveis no JSON).\n\nSe o passo 2 retornar devolucao, o produto já estava em saída — continue a sequência.\n\nbaseUrl: http://127.0.0.1:43123",
+    "description": "Testes da API RFID do MedIoT (ESP8266).\n\n**Ordem sugerida:**\n1. Bootstrap\n2. Saída (Arthur + Furadeira)\n3. Devolução (Arthur + Furadeira)\n4. Saída de novo (Arthur)\n5. Enrico tenta devolver → 403\n6. Arthur devolve (limpa)\n7. UID inválido → 404\n8. Listar movimentações\n\nUIDs reais do hardware (com dois-pontos).\n\nbaseUrl: http://127.0.0.1:43123",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -21,7 +21,7 @@
       }
     },
     {
-      "name": "2. RFID Scan — Saída (User A + Produto X)",
+      "name": "2. RFID Scan — Saída (Arthur + Furadeira)",
       "request": {
         "method": "POST",
         "header": [
@@ -32,7 +32,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"userUid\": \"CARD-8841\",\n  \"productUid\": \"TAG-LUV-M-01\"\n}",
+          "raw": "{\n  \"userUid\": \"67:52:B0:A0\",\n  \"productUid\": \"F5:76:82:B1\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -40,11 +40,11 @@
           }
         },
         "url": "{{baseUrl}}/api/rfid/scan",
-        "description": "João (CARD-8841) + Luva (TAG-LUV-M-01). Esperado: 201 action saida (ou devolucao se já estava em saída)."
+        "description": "Arthur (67:52:B0:A0) + Furadeira (F5:76:82:B1). Esperado: 201 action saida."
       }
     },
     {
-      "name": "3. RFID Scan — Devolução (mesmo User A)",
+      "name": "3. RFID Scan — Devolução (Arthur)",
       "request": {
         "method": "POST",
         "header": [
@@ -55,7 +55,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"userUid\": \"CARD-8841\",\n  \"productUid\": \"TAG-LUV-M-01\"\n}",
+          "raw": "{\n  \"userUid\": \"67:52:B0:A0\",\n  \"productUid\": \"F5:76:82:B1\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -63,11 +63,11 @@
           }
         },
         "url": "{{baseUrl}}/api/rfid/scan",
-        "description": "Mesmo João + mesma Luva. Esperado: 201 action devolucao."
+        "description": "Mesmo Arthur + Furadeira. Esperado: 201 action devolucao."
       }
     },
     {
-      "name": "4. RFID Scan — Saída de novo (User A, prepara 403)",
+      "name": "4. RFID Scan — Saída de novo (Arthur, prepara 403)",
       "request": {
         "method": "POST",
         "header": [
@@ -78,7 +78,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"userUid\": \"CARD-8841\",\n  \"productUid\": \"TAG-LUV-M-01\"\n}",
+          "raw": "{\n  \"userUid\": \"67:52:B0:A0\",\n  \"productUid\": \"F5:76:82:B1\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -86,7 +86,7 @@
           }
         },
         "url": "{{baseUrl}}/api/rfid/scan",
-        "description": "João retira de novo. Esperado: 201 action saida."
+        "description": "Arthur retira de novo. Esperado: 201 action saida."
       }
     },
     {
@@ -101,7 +101,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"userUid\": \"CARD-2204\",\n  \"productUid\": \"TAG-LUV-M-01\"\n}",
+          "raw": "{\n  \"userUid\": \"77:0C:B2:A0\",\n  \"productUid\": \"F5:76:82:B1\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -109,11 +109,11 @@
           }
         },
         "url": "{{baseUrl}}/api/rfid/scan",
-        "description": "Ana (CARD-2204) tenta devolver Luva do João. Esperado: 403."
+        "description": "Enrico (77:0C:B2:A0) tenta devolver Furadeira do Arthur. Esperado: 403."
       }
     },
     {
-      "name": "6. RFID Scan — Devolução (User A limpa estado)",
+      "name": "6. RFID Scan — Devolução (Arthur limpa estado)",
       "request": {
         "method": "POST",
         "header": [
@@ -124,7 +124,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"userUid\": \"CARD-8841\",\n  \"productUid\": \"TAG-LUV-M-01\"\n}",
+          "raw": "{\n  \"userUid\": \"67:52:B0:A0\",\n  \"productUid\": \"F5:76:82:B1\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -132,7 +132,7 @@
           }
         },
         "url": "{{baseUrl}}/api/rfid/scan",
-        "description": "João devolve. Esperado: 201 action devolucao."
+        "description": "Arthur devolve. Esperado: 201 action devolucao."
       }
     },
     {
@@ -147,7 +147,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"userUid\": \"CARD-INEXISTENTE\",\n  \"productUid\": \"TAG-INEXISTENTE\"\n}",
+          "raw": "{\n  \"userUid\": \"00:00:00:00\",\n  \"productUid\": \"FF:FF:FF:FF\"\n}",
           "options": {
             "raw": {
               "language": "json"
