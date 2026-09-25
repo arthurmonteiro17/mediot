@@ -39,7 +39,7 @@ export const staff: Staff[] = [
   },
 ];
 
-/** Ferramentas com RFID individual — estoque 1 (item único). */
+/** Uma tag física representa o tipo; estoque 1000 para a apresentação. */
 export const products: Product[] = [
   {
     id: "p1",
@@ -47,9 +47,9 @@ export const products: Product[] = [
     sku: "FUR-ELE",
     category: "Ferramentas",
     unit: "un",
-    stock: 1,
-    minStock: 1,
-    criticalStock: 0,
+    stock: 1000,
+    minStock: 50,
+    criticalStock: 10,
     rfidTag: "F5:76:82:B1",
   },
   {
@@ -58,9 +58,9 @@ export const products: Product[] = [
     sku: "PAR-ELE",
     category: "Ferramentas",
     unit: "un",
-    stock: 1,
-    minStock: 1,
-    criticalStock: 0,
+    stock: 1000,
+    minStock: 50,
+    criticalStock: 10,
     rfidTag: "47:5F:A1:A0",
   },
   {
@@ -69,9 +69,9 @@ export const products: Product[] = [
     sku: "MUL-DIG",
     category: "Instrumentos",
     unit: "un",
-    stock: 1,
-    minStock: 1,
-    criticalStock: 0,
+    stock: 1000,
+    minStock: 50,
+    criticalStock: 10,
     rfidTag: "B7:9B:AC:A0",
   },
   {
@@ -80,9 +80,9 @@ export const products: Product[] = [
     sku: "ALI-AMP",
     category: "Instrumentos",
     unit: "un",
-    stock: 1,
-    minStock: 1,
-    criticalStock: 0,
+    stock: 1000,
+    minStock: 50,
+    criticalStock: 10,
     rfidTag: "A7:5F:BB:A0",
   },
   {
@@ -91,9 +91,9 @@ export const products: Product[] = [
     sku: "CAI-FER",
     category: "Ferramentas",
     unit: "un",
-    stock: 1,
-    minStock: 1,
-    criticalStock: 0,
+    stock: 1000,
+    minStock: 50,
+    criticalStock: 10,
     rfidTag: "D7:23:9F:A0",
   },
   {
@@ -102,16 +102,16 @@ export const products: Product[] = [
     sku: "EXT-20M",
     category: "Elétrica",
     unit: "un",
-    stock: 1,
-    minStock: 1,
-    criticalStock: 0,
+    stock: 1000,
+    minStock: 50,
+    criticalStock: 10,
     rfidTag: "87:44:8E:A0",
   },
 ];
 
 /**
  * Histórico demo (saídas/devoluções RFID).
- * Estado final: todos os itens em estoque (stock 1).
+ * Pares entrada/saída — estoque final permanece 1000.
  */
 export const movements: Movement[] = [
   {
