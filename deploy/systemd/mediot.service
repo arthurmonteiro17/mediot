@@ -1,0 +1,23 @@
+[Unit]
+Description=MedIoT Next.js
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mediot
+Group=mediot
+WorkingDirectory=/opt/mediot
+Environment=NODE_ENV=production
+Environment=PORT=43123
+EnvironmentFile=-/opt/mediot/.env
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+
+# Segurança básica
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,13 +1,13 @@
 {
   "info": {
     "name": "MedIoT RFID",
-    "description": "Testes da API RFID do MedIoT (ESP8266).\n\n**Ordem sugerida:**\n1. Bootstrap\n2. Saída (Arthur + Furadeira)\n3. Devolução (Arthur + Furadeira)\n4. Saída de novo (Arthur)\n5. Enrico tenta devolver → 403\n6. Arthur devolve (limpa)\n7. UID inválido → 404\n8. Listar movimentações\n\nUIDs reais do hardware (com dois-pontos).\n\nbaseUrl: http://127.0.0.1:43123",
+    "description": "Testes da API RFID do MedIoT (ESP8266).\n\n**Ordem sugerida:**\n1. Bootstrap\n2. Saída (Arthur + Furadeira)\n3. Devolução (Arthur + Furadeira)\n4. Saída de novo (Arthur)\n5. Enrico tenta devolver → 403\n6. Arthur devolve (limpa)\n7. UID inválido → 404\n8. Listar movimentações\n\nUIDs reais do hardware (com dois-pontos).\n\nProdução: https://mediot.online\nLocal: http://127.0.0.1:43123",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://127.0.0.1:43123"
+      "value": "https://mediot.online"
     }
   ],
   "item": [

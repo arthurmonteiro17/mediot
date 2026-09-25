@@ -1,0 +1,20 @@
+# Cloudflare Tunnel — MedIoT (mediot.online)
+#
+# 1. No VPS, após `cloudflared tunnel login` e `cloudflared tunnel create mediot`:
+#    copie o Tunnel ID e o caminho do credentials-file gerados.
+# 2. Substitua TUNNEL_ID abaixo e aponte credentials-file.
+# 3. Instale em: /etc/cloudflared/config.yml
+#
+# DNS (uma vez):
+#   cloudflared tunnel route dns mediot mediot.online
+#   cloudflared tunnel route dns mediot www.mediot.online   # opcional
+
+tunnel: TUNNEL_ID
+credentials-file: /etc/cloudflared/TUNNEL_ID.json
+
+ingress:
+  - hostname: mediot.online
+    service: http://127.0.0.1:43123
+  - hostname: www.mediot.online
+    service: http://127.0.0.1:43123
+  - service: http_status:404

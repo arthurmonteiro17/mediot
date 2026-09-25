@@ -1,9 +1,9 @@
 # ESP8266 + MedIoT RFID
 
-O firmware em [`esp8266_rfid_scan.ino`](./esp8266_rfid_scan.ino) envia:
+Produção (VPS + domínio):
 
 ```http
-POST http://<IP-DO-PC>:43123/api/rfid/scan
+POST https://mediot.online/api/rfid/scan
 Content-Type: application/json
 
 {
@@ -11,6 +11,8 @@ Content-Type: application/json
   "productUid": "F5:76:82:B1"
 }
 ```
+
+Dev local: no sketch, `#define USE_HTTPS 0`, `API_HOST` = IP LAN do PC, `API_PORT` = `43123`.
 
 ## Respostas
 
@@ -30,10 +32,12 @@ Content-Type: application/json
 
 ## Configuração
 
-1. No sketch, ajuste `WIFI_SSID`, `WIFI_PASSWORD` e `API_HOST` (IP LAN do PC — **não** use `127.0.0.1`).
-2. No PC: `npm run dev` (porta `43123`).
-3. Os UIDs no banco devem ser **iguais** aos enviados pelo leitor (incluindo `:`).
+1. Ajuste `WIFI_SSID` e `WIFI_PASSWORD` no sketch.
+2. Produção: `USE_HTTPS 1` e `API_HOST = "mediot.online"` (já vem assim).
+3. No VPS, siga [`../../deploy/VPS.md`](../../deploy/VPS.md) até `https://mediot.online` responder.
+4. Os UIDs no banco devem ser **iguais** aos do leitor (incluindo `:`).
 
 ## Teste sem hardware
 
-Importe [`../../postman/MedIoT-RFID.postman_collection.json`](../../postman/MedIoT-RFID.postman_collection.json) no Postman.
+Importe [`../../postman/MedIoT-RFID.postman_collection.json`](../../postman/MedIoT-RFID.postman_collection.json) no Postman.  
+Variável `baseUrl`: `https://mediot.online` (ou `http://127.0.0.1:43123` no PC).

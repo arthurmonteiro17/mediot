@@ -1,28 +1,35 @@
 /*
- * MedIoT — ESP8266 RFID scan
+ * MedIoT — ESP8266 RFID scan (produção: mediot.online)
  *
  * Envia userUid (cartão) + productUid (tag do produto) para:
- *   POST http://<IP-DO-PC>:43123/api/rfid/scan
+ *   POST https://mediot.online/api/rfid/scan
  *
- * Configure WIFI_SSID, WIFI_PASSWORD e API_HOST antes de gravar.
- * Não use 127.0.0.1 no ESP — use o IP LAN do computador (ex.: 192.168.0.10).
+ * Configure WIFI_SSID e WIFI_PASSWORD antes de gravar.
  *
  * Bibliotecas: ESP8266WiFi, ESP8266HTTPClient, ArduinoJson
  * (MFRC522 opcional — abaixo há placeholders para UIDs lidos.)
+ *
+ * Dev local (sem HTTPS): defina USE_HTTPS 0 e API_HOST = "192.168.x.x"
  */
 
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+#include <WiFiClientSecureBearSSL.h>
 #include <WiFiClient.h>
 #include <ArduinoJson.h>
 
 const char* WIFI_SSID = "SUA_REDE";
 const char* WIFI_PASSWORD = "SUA_SENHA";
 
-// IP do PC que roda o Next.js (npm run dev na porta 43123)
-const char* API_HOST = "192.168.0.10";
-const uint16_t API_PORT = 43123;
+// Produção VPS + domínio (deixe USE_HTTPS 1)
+#define USE_HTTPS 1
+const char* API_HOST = "mediot.online";
+const uint16_t API_PORT = 443;
 const char* API_PATH = "/api/rfid/scan";
+
+// Em placas com pouca RAM, setInsecure() evita validar a CA do Cloudflare.
+// Para produção escolar/demo é aceitável; em ambiente crítico use fingerprint/CA.
+const bool TLS_INSECURE = true;
 
 void connectWifi() {
   WiFi.mode(WIFI_STA);
@@ -43,14 +50,27 @@ bool postRfidScan(const String& userUid, const String& productUid) {
     return false;
   }
 
-  WiFiClient client;
   HTTPClient http;
-  String url = String("http://") + API_HOST + ":" + API_PORT + API_PATH;
+  String url;
 
+#if USE_HTTPS
+  std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
+  if (TLS_INSECURE) {
+    client->setInsecure();
+  }
+  url = String("https://") + API_HOST + API_PATH;
+  if (!http.begin(*client, url)) {
+    Serial.println("Falha ao iniciar HTTPS");
+    return false;
+  }
+#else
+  WiFiClient client;
+  url = String("http://") + API_HOST + ":" + API_PORT + API_PATH;
   if (!http.begin(client, url)) {
     Serial.println("Falha ao iniciar HTTP");
     return false;
   }
+#endif
 
   http.addHeader("Content-Type", "application/json");
 

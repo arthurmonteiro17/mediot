@@ -1,0 +1,15 @@
+[Unit]
+Description=Cloudflare Tunnel (MedIoT)
+After=network-online.target mediot.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/cloudflared tunnel --config /etc/cloudflared/config.yml run
+Restart=always
+RestartSec=5
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target
