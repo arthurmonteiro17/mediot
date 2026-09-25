@@ -15,16 +15,17 @@ npm run dev
 
 Abra [http://127.0.0.1:43123](http://127.0.0.1:43123).
 
-## Deploy no VPS (`mediot.online`)
+## Deploy no Railway (`mediot.online`)
 
-Guia completo: [`deploy/VPS.md`](deploy/VPS.md)
+Guia: [`deploy/RAILWAY.md`](deploy/RAILWAY.md) · config: [`railway.toml`](railway.toml)
 
-Resumo: VPS + Cloudflare (domínio Free) + túnel nomeado → URL HTTPS fixa, sem `trycloudflare.com`.
+1. Conecte o repo GitHub no Railway  
+2. `DATABASE_URL=file:/app/data/prod.db` + volume em `/app/data`  
+3. Custom domain → `mediot.online`
 
-```bash
-sudo bash deploy/setup-vps.sh
-# depois: cloudflared tunnel login / create / route dns mediot mediot.online
-```
+## Deploy no VPS (alternativa)
+
+Guia: [`deploy/VPS.md`](deploy/VPS.md) — Cloudflare Tunnel + systemd.
 
 ## Módulos
 

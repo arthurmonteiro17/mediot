@@ -1,0 +1,21 @@
+# Railway — MedIoT
+# Deploy from GitHub: New Project → Deploy from GitHub Repo → mediot
+#
+# Variáveis (Settings → Variables):
+#   DATABASE_URL=file:/app/data/prod.db
+#
+# Volume (Settings → Volumes):
+#   Mount path: /app/data
+#   (persistência do SQLite entre deploys)
+#
+# Domínio custom: Settings → Networking → Custom Domain → mediot.online
+# (no Cloudflare, CNAME para o domínio *.up.railway.app que o Railway indicar)
+
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm ci && npx prisma generate && npm run build"
+
+[deploy]
+startCommand = "npx prisma migrate deploy && npx prisma db seed && npx next start --port ${PORT:-43123}"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
