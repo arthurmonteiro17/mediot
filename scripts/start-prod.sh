@@ -5,13 +5,7 @@ set -euo pipefail
 
 npx prisma migrate deploy
 
-EMPTY="$(npx tsx -e "
-import { PrismaClient } from '@prisma/client';
-const p = new PrismaClient();
-const n = await p.hospitalSettings.count();
-await p.\$disconnect();
-process.stdout.write(String(n));
-")"
+EMPTY="$(npx tsx scripts/check-db-empty.ts)"
 
 if [[ "${EMPTY}" == "0" ]]; then
   echo "Banco vazio — rodando seed inicial..."
