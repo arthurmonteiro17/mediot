@@ -4,7 +4,9 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -17,6 +19,9 @@ import type {
   Staff,
 } from "@/lib/types";
 import type { BootstrapPayload } from "@/components/providers";
+
+/** Intervalo de atualização automática do estoque/movimentações (ms). */
+const BOOTSTRAP_POLL_MS = 1000;
 
 type MediotStore = {
   ready: boolean;
@@ -74,6 +79,8 @@ export function MediotProvider({
   const [movements, setMovements] = useState<Movement[]>(
     initialData?.movements ?? [],
   );
+  /** Evita sobrepor requisições de bootstrap (poll + refresh manual). */
+  const bootstrapInFlightRef = useRef(false);
 
   const applyBootstrap = useCallback((data: BootstrapPayload) => {
     setHospital(data.hospital);
@@ -85,6 +92,8 @@ export function MediotProvider({
   }, []);
 
   const refresh = useCallback(async () => {
+    if (bootstrapInFlightRef.current) return;
+    bootstrapInFlightRef.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -96,7 +105,35 @@ export function MediotProvider({
       );
     } finally {
       setLoading(false);
+      bootstrapInFlightRef.current = false;
     }
+  }, [applyBootstrap]);
+
+  // Atualiza estoque, movimentações e empréstimos a cada 1s sem reload da página.
+  useEffect(() => {
+    let cancelled = false;
+
+    const poll = async () => {
+      if (cancelled || bootstrapInFlightRef.current) return;
+      bootstrapInFlightRef.current = true;
+      try {
+        const data = await fetchBootstrap();
+        if (!cancelled) applyBootstrap(data);
+      } catch {
+        // Mantém a última UI boa em falhas transitórias de rede.
+      } finally {
+        bootstrapInFlightRef.current = false;
+      }
+    };
+
+    const id = window.setInterval(() => {
+      void poll();
+    }, BOOTSTRAP_POLL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
   }, [applyBootstrap]);
 
   const createProduct = useCallback(async (input: CreateProductInput) => {
